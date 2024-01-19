@@ -64,7 +64,7 @@ def return_subject_name(data):
     global subject_info
     for i in data:
         if i['maMonHoc'] not in subject_info:
-            subject_info.append(i['maMonHoc'])
+            subject_info.append({"id":i['maMonHoc'], "name":i['tenMonHoc']})
             
 app = Flask(__name__)
 cors = CORS(app)

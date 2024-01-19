@@ -1,22 +1,29 @@
+from flask import Flask,request
+from flask_cors import CORS,cross_origin  # The typical way to import flask-cors
 import json
 import time
-from flask import Flask, request
-from flask_cors import CORS  # The typical way to import flask-cors
 import threading
 import os
-start_time = time.time()
+
 name_teacher = []
 teacher_info = []
-f = open('data.json')
-data = json.load(f)
+subject_info = []
 
-f = open('data_lecturer.json')
-data_lecturer = json.load(f)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_json_path = os.path.join(current_dir, 'data.json')
+data_lecturer_json_path = os.path.join(current_dir, 'data_lecturer.json')
+
+with open(data_json_path) as f:
+    data = json.load(f)
+
+with open(data_lecturer_json_path) as f:
+    data_lecturer = json.load(f)
+    
 def search_by_maMonHoc(data,maMonHoc):
     for i in data:
         if i['maMonHoc'].lower() == maMonHoc.lower():
-            return i
-    return {}
+            return [i]
+    return []
 def search_by_giangVien(data,giangVien):
     data_return = []
     if type(data) == dict:
@@ -41,7 +48,9 @@ def return_teacher_name(data):
     global teacher_info
     for i in data:
         for j in i['lichHoc']:
-            if j['giangVien'] not in name_teacher and j['giangVienBT'] not in name_teacher:
+            if j['giangVien'] == j['giangVienBT'] and j['giangVien'] not in name_teacher:
+                name_teacher.append(j['giangVien'])
+            if j['giangVien'] not in name_teacher and j['giangVienBT'] not in name_teacher and j['giangVien'] != j['giangVienBT']:
                 name_teacher.append(j['giangVien'])
                 name_teacher.append(j['giangVienBT'])
             elif j['giangVien'] not in name_teacher:
@@ -50,9 +59,25 @@ def return_teacher_name(data):
                 name_teacher.append(j['giangVienBT'])
     for i in name_teacher:
         teacher_info.append(search_info_lecturer(data_lecturer,i) if search_info_lecturer(data_lecturer,i) != {} else {'name':i,'phone':'','email':''})
-FlaskApp = Flask(__name__)
-cors = CORS(FlaskApp)
-@FlaskApp.route('/api')
+        
+def return_subject_name(data):
+    global subject_info
+    for i in data:
+        if i['maMonHoc'] not in subject_info:
+            subject_info.append(i['maMonHoc'])
+            
+app = Flask(__name__)
+cors = CORS(app)
+
+@app.route('/')
+def home():
+    return 'Hello, World!'
+
+@app.route('/about')
+def about():
+    return '@KenKout'
+
+@app.route('/api')
 def WebAPI():
     if "CF-Connecting-IP" in request.headers:
         remote_addr = request.headers.getlist("CF-Connecting-IP")[0].rpartition(' ')[-1]
@@ -62,19 +87,19 @@ def WebAPI():
         remote_addr = request.remote_addr or 'untrackable'
     maMonHoc = request.args.get('id')
     giangVien = request.args.get('gv')
-    if maMonHoc != None and giangVien != None:
+    if maMonHoc != None and giangVien != None and maMonHoc != "" and giangVien != "" :
         print(f"request from {remote_addr} with id={maMonHoc} and gv={giangVien}")
         return search_by_giangVien(search_by_maMonHoc(data,maMonHoc),giangVien)
-    elif maMonHoc != None:
+    elif maMonHoc != None and maMonHoc != "":
         print(f"request from {remote_addr} with id={maMonHoc}")
         return search_by_maMonHoc(data,maMonHoc)
-    elif giangVien != None:
+    elif giangVien != None and giangVien != "":
         print(f"request from {remote_addr} with gv={giangVien}")
-        return search_by_giangVien(data_lecturer,giangVien)
+        return search_by_giangVien(data,giangVien)
     print(f"Invalid request from {remote_addr}")
     return []
 
-@FlaskApp.route('/api/info')
+@app.route('/api/info')
 def WebAPI_Info():
     if "CF-Connecting-IP" in request.headers:
         remote_addr = request.headers.getlist("CF-Connecting-IP")[0].rpartition(' ')[-1]
@@ -90,15 +115,16 @@ def WebAPI_Info():
         print(f"request from {remote_addr} - Get all info")
         return teacher_info
 
-@FlaskApp.route('/')
-def Main():
-    return '@KenKout'
-def RunWebAPI():
-    import logging
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
-    FlaskApp.run(port=int(os.environ.get("PORT", 8080)),host='0.0.0.0')
-
-
+@app.route('/api/info/subject')
+def WebAPI_Info_Subject():
+    if "CF-Connecting-IP" in request.headers:
+        remote_addr = request.headers.getlist("CF-Connecting-IP")[0].rpartition(' ')[-1]
+    elif 'X-Forwarded-For' in request.headers:
+        remote_addr = request.headers.getlist("X-Forwarded-For")[0].rpartition(' ')[-1]
+    else:
+        remote_addr = request.remote_addr or 'untrackable'
+    print(f"request from {remote_addr} - Get all info")
+    return subject_info
+    
 return_teacher_name(data)
-threading.Thread(target=RunWebAPI).start()
+return_subject_name(data)

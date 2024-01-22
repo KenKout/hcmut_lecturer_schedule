@@ -24,9 +24,11 @@ def search_by_maMonHoc(data,maMonHoc):
         if i['maMonHoc'].lower() == maMonHoc.lower():
             for j in i['lichHoc']:
                 info_teacher = search_info_lecturer(data_lecturer,j['giangVien'])
-                print(info_teacher)
                 j['email'] = info_teacher['email']
                 j['phone'] = info_teacher['phone']
+                info_teacher = search_info_lecturer(data_lecturer,j['giangVienBT'])
+                j['emailBT'] = info_teacher['email']
+                j['phoneBT'] = info_teacher['phone']
             return [i]
     return []
 def search_by_giangVien(data,giangVien):
@@ -38,9 +40,12 @@ def search_by_giangVien(data,giangVien):
         json_data['lichHoc'] = []
         for j in i['lichHoc']:
             if j['giangVien'].lower() == giangVien.lower() or j['giangVienBT'].lower() == giangVien.lower():
-                info_teacher = search_info_lecturer(data_lecturer,giangVien)
+                info_teacher = search_info_lecturer(data_lecturer,j['giangVien'])
                 j['email'] = info_teacher['email']
                 j['phone'] = info_teacher['phone']
+                info_teacher = search_info_lecturer(data_lecturer,j['giangVienBT'])
+                j['emailBT'] = info_teacher['email']
+                j['phoneBT'] = info_teacher['phone']
                 json_data['lichHoc'].append(j)
         if len(json_data['lichHoc']) > 0:
             data_return.append(json_data)

@@ -18,6 +18,24 @@ with open(data_json_path) as f:
 
 with open(data_lecturer_json_path) as f:
     data_lecturer = json.load(f)
+
+def convert_vietnamese_to_normal(text):
+    # Define a mapping of Vietnamese characters with accents to their normal counterparts
+    vietnamese_chars = "ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
+    normal_chars = "AAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYDaaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd"
+
+    # Convert each character in the input text to its normal version
+    converted_text = ""
+    for char in text:
+        if char in vietnamese_chars:
+            char_index = vietnamese_chars.index(char)
+            char = normal_chars[char_index]
+        converted_text += char
+
+    return converted_text
+
+
+
     
 def search_by_maMonHoc(data,maMonHoc):
     for i in data:
@@ -39,7 +57,7 @@ def search_by_giangVien(data,giangVien):
         json_data = i.copy()
         json_data['lichHoc'] = []
         for j in i['lichHoc']:
-            if j['giangVien'].lower() == giangVien.lower() or j['giangVienBT'].lower() == giangVien.lower():
+            if convert_vietnamese_to_normal(j['giangVien']).lower() == convert_vietnamese_to_normal(giangVien).lower() or convert_vietnamese_to_normal(j['giangVienBT']).lower() == convert_vietnamese_to_normal(giangVien).lower():
                 info_teacher = search_info_lecturer(data_lecturer,j['giangVien'])
                 j['email'] = info_teacher['email']
                 j['phone'] = info_teacher['phone']
@@ -52,7 +70,7 @@ def search_by_giangVien(data,giangVien):
     return data_return
 def search_info_lecturer(data_lecturer,giangVien):
     for i in data_lecturer:
-        if i['name'].lower() == giangVien.lower():
+        if convert_vietnamese_to_normal(i['name']).lower() == convert_vietnamese_to_normal(giangVien).lower():
             return i
     return {'name':giangVien,'phone':'','email':''}
 
@@ -138,6 +156,13 @@ def WebAPI_Info_Subject():
         remote_addr = request.remote_addr or 'untrackable'
     print(f"request from {remote_addr} - Get all info")
     return subject_info
+
+def RunWebAPI():
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    app.run(port=int(os.environ.get("PORT", 8080)),host='0.0.0.0')
     
 return_teacher_name(data)
 return_subject_name(data)
+RunWebAPI()

@@ -9,30 +9,43 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from flask_session import Session
+auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 
 
 load_dotenv()
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://localhost:8080/api/auth/callback')
+
 
 print(f"CLIENT_ID: {CLIENT_ID}")
 print(f"CLIENT_SECRET: {CLIENT_SECRET}")
 
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+client_config = {
+    "web": {
+        "client_id": CLIENT_ID,
+        "project_id": "bkscheduleauth",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": CLIENT_SECRET,
+        "redirect_uris": [REDIRECT_URI],
+  }
+}
 
 
 
-flow = Flow.from_client_secrets_file(
-    'auth.json',
-    scopes=[     # these will get overridden
+flow = Flow.from_client_config(
+    client_config,
+    scopes=[
         'https://www.googleapis.com/auth/calendar',
         'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/userinfo.email',
         'openid'
     ],
-    redirect_uri='http://localhost:8080/api/auth/callback'  # Adjust this to your actual callback URL
+    redirect_uri=os.getenv("REDIRECT_URI")
 )
 
 flow.scope = [

@@ -1,7 +1,6 @@
 from flask import Flask,request
-from flask_cors import CORS,cross_origin  # The typical way to import flask-cors
+from flask_cors import CORS  # The typical way to import flask-cors
 import os
-from utils import convert_vietnamese_to_normal
 from flask_session import Session
 from flasgger import Swagger
 
@@ -24,8 +23,8 @@ from routes.api import api_bp
 from routes.auth import auth_bp
 from routes.calendar import celandar_bp
 
-def RunWebAPI():
-    import logging
+import logging
+if __name__ == "__main__":
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
     app.register_blueprint(lecturers_bp)
@@ -41,4 +40,3 @@ def RunWebAPI():
     )
     
 
-RunWebAPI()
